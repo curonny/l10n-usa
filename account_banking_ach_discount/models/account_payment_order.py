@@ -77,7 +77,6 @@ class AccountPaymentOrder(models.Model):
                             # Discount Taken Update
                             line.move_id.discount_taken = discount
 
-
                     if invoice_close and round(writeoff, 2):
                         if use_debit:
                             temp_vals["debit"] = amount + discount + round(writeoff, 2)
