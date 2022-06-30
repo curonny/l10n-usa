@@ -132,7 +132,17 @@ class AccountPaymentOrder(models.Model):
         inbound_payment = self.payment_type == "inbound"
 
         file_mod = self.get_file_id_mod()
-        ach_file = AchFile(file_id_mod=file_mod, settings=self.ach_settings())
+
+        pre_settings=self.ach_settings()
+        arr_exclusion = ['-', '&', '.',  ',']
+        for exclusion in arr_exclusion:
+            if exclusion in pre_settings['company_id']:
+                pre_settings['company_id']='1'+pre_settings['company_id'].replace(exclusion,'')
+            if exclusion in pre_settings['immediate_dest_name']:
+                pre_settings['immediate_dest_name']=pre_settings['immediate_dest_name'].replace(exclusion,'')
+
+
+        ach_file = AchFile(file_id_mod=file_mod, settings=pre_settings)
         filename = "{today}_{bank}_{file_mod}.txt".format(
             today=fields.Date.today(),
             bank=self.company_partner_bank_id.id,
