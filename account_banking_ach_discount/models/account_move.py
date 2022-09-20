@@ -31,7 +31,7 @@ class AccountMove(models.Model):
                     if mvl.move_id and mvl.id == item["payment_id"]:
                         for pay_li in mvl.bank_payment_line_id.payment_line_ids:
                             # Get related payment line ref
-                            if pay_li.communication == inv_number:
+                            if pay_li.move_line_id.id==mvl.id:
                                 item["amount"] = pay_li.amount_currency
                     # for non-ach payment
                     # Deduct the discount only for the related payment.
