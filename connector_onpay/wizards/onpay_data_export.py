@@ -6,10 +6,10 @@ import csv
 import os
 import tempfile
 
-from odoo import api, fields, models
-from odoo.tools import misc
-
 import xlsxwriter
+
+from odoo import api, fields, models
+from odoo.exceptions import UserError
 
 
 class OnPayExport(models.TransientModel):
@@ -19,10 +19,10 @@ class OnPayExport(models.TransientModel):
     date_from = fields.Date(string="From")
     date_to = fields.Date(string="To")
     file_type = fields.Selection(
-        [("csv", "CSV"), ("xls", "XLS")], default="csv", string="File Type"
+        [("csv", "CSV"), ("xls", "XLS")],
+        default="csv",
     )
 
-    @api.multi
     def export_data(self):
         if self.file_type == "csv":
             res_id, context = self.export_data_csv()
@@ -30,7 +30,7 @@ class OnPayExport(models.TransientModel):
             res_id, context = self.export_data_xls()
         return {
             "type": "ir.actions.act_window",
-            "view_type": "form",
+            # "view_type": "form",
             "view_mode": "form",
             "res_model": "wiz.xls.content",
             "target": "new",
@@ -40,7 +40,7 @@ class OnPayExport(models.TransientModel):
 
     @api.model
     def _get_employee_timesheet_data(self, date_from, date_to):
-        """ Timesheet data of employees between selected date """
+        """Timesheet data of employees between selected date"""
         self.env.cr.execute(
             """
             SELECT
@@ -73,7 +73,7 @@ class OnPayExport(models.TransientModel):
 
     @api.model
     def _get_employee_expense_data(self, date_from, date_to):
-        """ Expense data (approved) of employees between selected date """
+        """Expense data (approved) of employees between selected date"""
         self.env.cr.execute(
             """
             SELECT
@@ -107,7 +107,6 @@ class OnPayExport(models.TransientModel):
         )
         return self.env.cr.dictfetchall()
 
-    @api.multi
     def export_data_csv(self):
         if self.env.context.get("active_ids"):
             my_data = self._get_employee_timesheet_data(self.date_from, self.date_to)
@@ -147,18 +146,15 @@ class OnPayExport(models.TransientModel):
                         ]
                     )
 
-            buf = base64.encodestring(
-                open(str(file_path[1]) + ".csv", "rb").read())
+            buf = base64.encodestring(open(str(file_path[1]) + ".csv", "rb").read())
             try:
                 if buf:
                     os.remove(str(file_path[1]) + ".csv")
-            except OSError:
+            except UserError:
                 pass
 
-            cr, uid, context = self.env.args
-            context = dict(context)
+            context = dict(self._context)
             context.update({"file": buf})
-            self.env.args = cr, uid, misc.frozendict(context)
             res_id = self.env["wiz.xls.content"].create(
                 {
                     "file": buf,
@@ -171,7 +167,6 @@ class OnPayExport(models.TransientModel):
             )
             return res_id, context
 
-    @api.multi
     def export_data_xls(self):
         if self.env.context.get("active_ids"):
             my_data = self._get_employee_timesheet_data(self.date_from, self.date_to)
@@ -208,7 +203,7 @@ class OnPayExport(models.TransientModel):
                 row += 1
 
             # Write the data of expense in the xls sheet
-            for exp in expense_data:
+            for _exp in expense_data:
                 worksheet.write(row, 0, "1")
                 worksheet.write(row, 1, data.get("line_onpay_code"))
                 worksheet.write(row, 2, data.get("emp_onpay_code"))
@@ -220,18 +215,14 @@ class OnPayExport(models.TransientModel):
             worksheet.freeze_panes(1, 0)
             workbook.close()
 
-            buf = base64.encodestring(
-                open(str(file_path[1]) + ".xlsx", "rb").read())
+            buf = base64.encodestring(open(str(file_path[1]) + ".xlsx", "rb").read())
             try:
                 if buf:
                     os.remove(str(file_path[1]) + ".xlsx")
-            except OSError:
+            except UserError:
                 pass
-
-            cr, uid, context = self.env.args
-            context = dict(context)
+            context = dict(self._context)
             context.update({"file": buf})
-            self.env.args = cr, uid, misc.frozendict(context)
             res_id = self.env["wiz.xls.content"].create(
                 {
                     "file": buf,
@@ -254,10 +245,9 @@ class WizOnPayXLSContent(models.TransientModel):
     def default_get(self, fields):
         # This method is used to get default file name and file content
         res = super(WizOnPayXLSContent, self).default_get(fields)
-        # res.update({'name': 'OnPay_Data.xlsx'})
         if self.env.context.get("file"):
             res.update({"file": self.env.context["file"]})
         return res
 
-    file = fields.Binary("File")
+    file = fields.Binary()
     name = fields.Char(string="File Name", size=50)

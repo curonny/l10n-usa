@@ -8,12 +8,6 @@ class OnPayType(models.Model):
     _name = "onpay.pay.type"
     _description = "OnPay Pay Type"
 
-    name = fields.Char(
-        string="Name",
-    )
-    code = fields.Char(
-        string="Code",
-    )
-    treat_as_cash = fields.Boolean(
-        string="Treat as Cash",
-    )
+    name = fields.Char()
+    code = fields.Char()
+    treat_as_cash = fields.Boolean()
