@@ -30,7 +30,7 @@ class AccountPaymentOrder(models.Model):
         mandate = self.env["account.banking.mandate"]
         for order in self:
             to_expire_mandates = first_mandates = all_mandates = mandate
-            for bank_line in order.payment_ids:
+            for bank_line in order.payment_line_ids:
                 if bank_line.mandate_id in all_mandates:
                     continue
                 all_mandates += bank_line.mandate_id
