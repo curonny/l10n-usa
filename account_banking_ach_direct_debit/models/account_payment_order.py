@@ -30,7 +30,7 @@ class AccountPaymentOrder(models.Model):
         mandate = self.env["account.banking.mandate"]
         for order in self:
             to_expire_mandates = first_mandates = all_mandates = mandate
-            for bank_line in order.bank_line_ids:
+            for bank_line in order.payment_line_ids:
                 if bank_line.mandate_id in all_mandates:
                     continue
                 all_mandates += bank_line.mandate_id
@@ -51,8 +51,12 @@ class AccountPaymentOrder(models.Model):
                         "Automatically switched from <b>First</b> to "
                         "<b>Recurring</b> when the debit order "
                         "<a href=# data-oe-model=account.payment.order "
-                        "data-oe-id=%d>%s</a> has been marked as uploaded."
+                        "data-oe-id=%(order_id)d>%(order_name)s</a> has been "
+                        "marked as uploaded."
                     )
-                    % (order.id, order.name)
+                    % {
+                        "order_id": order.id,
+                        "order_name": order.name,
+                    }
                 )
         return res

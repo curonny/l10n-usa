@@ -130,7 +130,7 @@ class AccountPaymentOrder(models.Model):
             file_mod=file_mod,
         )
         entries = []
-        for line in self.bank_line_ids:
+        for line in self.payment_line_ids:
             if inbound_payment:
                 self.validate_mandates(line)
             self.validate_banking(line)
